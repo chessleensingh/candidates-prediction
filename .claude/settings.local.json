@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile tournament_data.py)",
+      "Bash(python -m py_compile scoring.py)",
+      "Bash(python -m py_compile database.py)",
+      "Bash(python -m py_compile config.py)",
+      "Bash(python -m py_compile bot.py)",
+      "Bash(python -m py_compile cogs/predictions.py)",
+      "Bash(python -m py_compile cogs/results.py)",
+      "Bash(python -m py_compile cogs/schedule.py)",
+      "Bash(python -m py_compile cogs/leaderboard.py)",
+      "WebSearch",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.chess.com)",
+      "WebFetch(domain:liquipedia.net)",
+      "Bash(where railway:*)",
+      "Bash(npm install:*)",
+      "Bash(python -c \"import tournament_data; print\\(f''Open players: {len\\(tournament_data.OPEN_PLAYERS\\)}''\\); print\\(f''Women players: {len\\(tournament_data.WOMEN_PLAYERS\\)}''\\); print\\(f''Open rounds: {len\\(tournament_data.OPEN_ROUND_DATES\\)}''\\); print\\(f''Open pairings: {len\\(tournament_data.OPEN_PAIRINGS\\)} rounds, {sum\\(len\\(r\\) for r in tournament_data.OPEN_PAIRINGS\\)} total games''\\); print\\(f''R1 date: {tournament_data.OPEN_ROUND_DATES[0]}''\\); print\\(f''R14 date: {tournament_data.OPEN_ROUND_DATES[13]}''\\)\")"
+    ]
+  }
+}
