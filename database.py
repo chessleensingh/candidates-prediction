@@ -476,6 +476,7 @@ def get_user_stats(user_id: int, section: str | None = None) -> sqlite3.Row | No
                    COUNT(DISTINCT g.round_number) AS rounds_played
             FROM scores s
             JOIN users u USING (user_id)
+            JOIN games g ON s.game_id = g.game_id
             WHERE s.user_id = ?
             """,
             (user_id,),
