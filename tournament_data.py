@@ -2,6 +2,7 @@
 Static tournament data for the 2026 Chess Candidates Tournament.
 Pegeia, Cyprus (Cap St Georges Hotel and Resort).
 March 29 – April 15, 2026 (14 rounds, double round-robin, 8 players per section)
+Pairings sourced from: lichess.org/broadcast/fide-candidates-2026--combined-open--women
 """
 
 from datetime import datetime, timezone
@@ -61,73 +62,169 @@ ROUND_DATES = [
     datetime(2026, 4, 15, 12, 30, tzinfo=timezone.utc),   # R14
 ]
 
-# Both sections use the same dates
 OPEN_ROUND_DATES = ROUND_DATES
 WOMEN_ROUND_DATES = ROUND_DATES
 
-# Prediction cutoff: 30 minutes before round start
 PREDICTION_CUTOFF_MINUTES = 30
 
 # ---------------------------------------------------------------------------
-# Pairings  (double round-robin, Berger system for 8 players)
-# Each round has 4 games.  Tuple: (white_player_index, black_player_index)
-# using 0-based index into the relevant players list.
-# Generated with the standard Berger round-robin schedule for 8 players.
+# Official pairings — sourced from Lichess broadcast
+# Each entry is (white_player, black_player)
 # ---------------------------------------------------------------------------
 
-def _berger_schedule(n: int) -> list[list[tuple[int, int]]]:
-    """
-    Generate a single round-robin Berger schedule for n players (n must be even).
-    Returns a list of rounds; each round is a list of (home, away) pairs.
-    Home plays White in round 1 of each pairing; colours swap in second half.
-    """
-    players = list(range(n))
-    rounds = []
-    for r in range(n - 1):
-        round_pairs = []
-        for i in range(n // 2):
-            home = players[i]
-            away = players[n - 1 - i]
-            if r % 2 == 0:
-                round_pairs.append((home, away))
-            else:
-                round_pairs.append((away, home))
-        rounds.append(round_pairs)
-        # Rotate: keep player 0 fixed, rotate the rest
-        players = [players[0]] + [players[-1]] + players[1:-1]
-    return rounds
+OPEN_PAIRINGS: list[list[tuple[str, str]]] = [
+    # R1
+    [("Fabiano Caruana", "Hikaru Nakamura"),
+     ("Praggnanandhaa R", "Anish Giri"),
+     ("Matthias Bluebaum", "Wei Yi"),
+     ("Javokhir Sindarov", "Andrey Esipenko")],
+    # R2
+    [("Andrey Esipenko", "Hikaru Nakamura"),
+     ("Anish Giri", "Fabiano Caruana"),
+     ("Wei Yi", "Praggnanandhaa R"),
+     ("Javokhir Sindarov", "Matthias Bluebaum")],
+    # R3
+    [("Matthias Bluebaum", "Andrey Esipenko"),
+     ("Praggnanandhaa R", "Javokhir Sindarov"),
+     ("Fabiano Caruana", "Wei Yi"),
+     ("Hikaru Nakamura", "Anish Giri")],
+    # R4
+    [("Andrey Esipenko", "Anish Giri"),
+     ("Wei Yi", "Hikaru Nakamura"),
+     ("Javokhir Sindarov", "Fabiano Caruana"),
+     ("Matthias Bluebaum", "Praggnanandhaa R")],
+    # R5
+    [("Praggnanandhaa R", "Andrey Esipenko"),
+     ("Fabiano Caruana", "Matthias Bluebaum"),
+     ("Hikaru Nakamura", "Javokhir Sindarov"),
+     ("Anish Giri", "Wei Yi")],
+    # R6
+    [("Fabiano Caruana", "Andrey Esipenko"),
+     ("Hikaru Nakamura", "Praggnanandhaa R"),
+     ("Anish Giri", "Matthias Bluebaum"),
+     ("Wei Yi", "Javokhir Sindarov")],
+    # R7
+    [("Andrey Esipenko", "Wei Yi"),
+     ("Javokhir Sindarov", "Anish Giri"),
+     ("Matthias Bluebaum", "Hikaru Nakamura"),
+     ("Praggnanandhaa R", "Fabiano Caruana")],
+    # R8
+    [("Andrey Esipenko", "Javokhir Sindarov"),
+     ("Wei Yi", "Matthias Bluebaum"),
+     ("Anish Giri", "Praggnanandhaa R"),
+     ("Hikaru Nakamura", "Fabiano Caruana")],
+    # R9
+    [("Hikaru Nakamura", "Andrey Esipenko"),
+     ("Fabiano Caruana", "Anish Giri"),
+     ("Praggnanandhaa R", "Wei Yi"),
+     ("Matthias Bluebaum", "Javokhir Sindarov")],
+    # R10
+    [("Andrey Esipenko", "Matthias Bluebaum"),
+     ("Javokhir Sindarov", "Praggnanandhaa R"),
+     ("Wei Yi", "Fabiano Caruana"),
+     ("Anish Giri", "Hikaru Nakamura")],
+    # R11
+    [("Anish Giri", "Andrey Esipenko"),
+     ("Hikaru Nakamura", "Wei Yi"),
+     ("Fabiano Caruana", "Javokhir Sindarov"),
+     ("Praggnanandhaa R", "Matthias Bluebaum")],
+    # R12
+    [("Andrey Esipenko", "Praggnanandhaa R"),
+     ("Matthias Bluebaum", "Fabiano Caruana"),
+     ("Javokhir Sindarov", "Hikaru Nakamura"),
+     ("Wei Yi", "Anish Giri")],
+    # R13
+    [("Wei Yi", "Andrey Esipenko"),
+     ("Anish Giri", "Javokhir Sindarov"),
+     ("Hikaru Nakamura", "Matthias Bluebaum"),
+     ("Fabiano Caruana", "Praggnanandhaa R")],
+    # R14
+    [("Andrey Esipenko", "Fabiano Caruana"),
+     ("Praggnanandhaa R", "Hikaru Nakamura"),
+     ("Matthias Bluebaum", "Anish Giri"),
+     ("Javokhir Sindarov", "Wei Yi")],
+]
 
-
-def _build_pairings(players: list[str]) -> list[list[tuple[str, str]]]:
-    """
-    Build a full double round-robin pairing list.
-    Returns 14 rounds (for 8 players); each round is a list of 4 (white, black) tuples.
-    """
-    n = len(players)
-    first_half = _berger_schedule(n)   # 7 rounds
-    # Second half: reverse colours
-    second_half = [[(b, w) for w, b in rnd] for rnd in first_half]
-    all_rounds = first_half + second_half  # 14 rounds
-    # Map indices to names
-    named = []
-    for rnd in all_rounds:
-        named.append([(players[w], players[b]) for w, b in rnd])
-    return named
-
-
-OPEN_PAIRINGS: list[list[tuple[str, str]]] = _build_pairings(OPEN_PLAYERS)
-WOMEN_PAIRINGS: list[list[tuple[str, str]]] = _build_pairings(WOMEN_PLAYERS)
+WOMEN_PAIRINGS: list[list[tuple[str, str]]] = [
+    # R1
+    [("Divya Deshmukh", "Anna Muzychuk"),
+     ("Vaishali Rameshbabu", "Bibisara Assaubayeva"),
+     ("Aleksandra Goryachkina", "Kateryna Lagno"),
+     ("Zhu Jiner", "Tan Zhongyi")],
+    # R2
+    [("Anna Muzychuk", "Tan Zhongyi"),
+     ("Kateryna Lagno", "Zhu Jiner"),
+     ("Bibisara Assaubayeva", "Aleksandra Goryachkina"),
+     ("Divya Deshmukh", "Vaishali Rameshbabu")],
+    # R3
+    [("Vaishali Rameshbabu", "Anna Muzychuk"),
+     ("Aleksandra Goryachkina", "Divya Deshmukh"),
+     ("Zhu Jiner", "Bibisara Assaubayeva"),
+     ("Tan Zhongyi", "Kateryna Lagno")],
+    # R4
+    [("Anna Muzychuk", "Kateryna Lagno"),
+     ("Bibisara Assaubayeva", "Tan Zhongyi"),
+     ("Divya Deshmukh", "Zhu Jiner"),
+     ("Vaishali Rameshbabu", "Aleksandra Goryachkina")],
+    # R5
+    [("Aleksandra Goryachkina", "Anna Muzychuk"),
+     ("Zhu Jiner", "Vaishali Rameshbabu"),
+     ("Tan Zhongyi", "Divya Deshmukh"),
+     ("Kateryna Lagno", "Bibisara Assaubayeva")],
+    # R6
+    [("Zhu Jiner", "Anna Muzychuk"),
+     ("Tan Zhongyi", "Aleksandra Goryachkina"),
+     ("Kateryna Lagno", "Vaishali Rameshbabu"),
+     ("Bibisara Assaubayeva", "Divya Deshmukh")],
+    # R7
+    [("Anna Muzychuk", "Bibisara Assaubayeva"),
+     ("Divya Deshmukh", "Kateryna Lagno"),
+     ("Vaishali Rameshbabu", "Tan Zhongyi"),
+     ("Aleksandra Goryachkina", "Zhu Jiner")],
+    # R8
+    [("Anna Muzychuk", "Divya Deshmukh"),
+     ("Bibisara Assaubayeva", "Vaishali Rameshbabu"),
+     ("Kateryna Lagno", "Aleksandra Goryachkina"),
+     ("Tan Zhongyi", "Zhu Jiner")],
+    # R9
+    [("Tan Zhongyi", "Anna Muzychuk"),
+     ("Zhu Jiner", "Kateryna Lagno"),
+     ("Aleksandra Goryachkina", "Bibisara Assaubayeva"),
+     ("Vaishali Rameshbabu", "Divya Deshmukh")],
+    # R10
+    [("Anna Muzychuk", "Vaishali Rameshbabu"),
+     ("Divya Deshmukh", "Aleksandra Goryachkina"),
+     ("Bibisara Assaubayeva", "Zhu Jiner"),
+     ("Kateryna Lagno", "Tan Zhongyi")],
+    # R11
+    [("Kateryna Lagno", "Anna Muzychuk"),
+     ("Tan Zhongyi", "Bibisara Assaubayeva"),
+     ("Zhu Jiner", "Divya Deshmukh"),
+     ("Aleksandra Goryachkina", "Vaishali Rameshbabu")],
+    # R12
+    [("Anna Muzychuk", "Aleksandra Goryachkina"),
+     ("Vaishali Rameshbabu", "Zhu Jiner"),
+     ("Divya Deshmukh", "Tan Zhongyi"),
+     ("Bibisara Assaubayeva", "Kateryna Lagno")],
+    # R13
+    [("Bibisara Assaubayeva", "Anna Muzychuk"),
+     ("Kateryna Lagno", "Divya Deshmukh"),
+     ("Tan Zhongyi", "Vaishali Rameshbabu"),
+     ("Zhu Jiner", "Aleksandra Goryachkina")],
+    # R14
+    [("Anna Muzychuk", "Zhu Jiner"),
+     ("Aleksandra Goryachkina", "Tan Zhongyi"),
+     ("Vaishali Rameshbabu", "Kateryna Lagno"),
+     ("Divya Deshmukh", "Bibisara Assaubayeva")],
+]
 
 # ---------------------------------------------------------------------------
 # Scoring
 # ---------------------------------------------------------------------------
 
-# Points awarded for a correct prediction
 POINTS_CORRECT = 3
-# Bonus points for predicting a decisive result correctly (win/loss, not draw)
 POINTS_DECISIVE_BONUS = 1
 
-# Result constants (stored in DB and used in predictions)
 RESULT_WHITE_WIN = "1-0"
 RESULT_DRAW = "1/2-1/2"
 RESULT_BLACK_WIN = "0-1"
