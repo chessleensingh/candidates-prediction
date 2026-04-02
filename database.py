@@ -12,6 +12,7 @@ results          - official results entered by admin
 scores           - computed points per user per game (materialised for speed)
 """
 
+import os
 import sqlite3
 import logging
 from contextlib import contextmanager
@@ -32,7 +33,9 @@ from tournament_data import (
 
 log = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent / "predictions.db"
+# Use DB_PATH env var if set (points to Railway volume), otherwise local file
+_db_env = os.getenv("DB_PATH")
+DB_PATH = Path(_db_env) if _db_env else Path(__file__).parent / "predictions.db"
 
 
 @contextmanager
