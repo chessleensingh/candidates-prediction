@@ -36,21 +36,21 @@ log = logging.getLogger("bot")
 # ---------------------------------------------------------------------------
 
 STATUSES = [
-    ("watching", "Nepomniachtchi blunder"),
-    ("watching", "Gukesh forget his prep"),
-    ("playing", "Magnus Carlsen (he declined)"),
-    ("listening", "Fabiano Caruana think for 45 min"),
-    ("watching", "for the next Bongcloud"),
-    ("competing", "to replace Octopus Paul"),
-    ("watching", "Hikaru speedrun the standings"),
-    ("playing", "e4 (objectively best)"),
-    ("watching", "a draw offer get declined"),
-    ("listening", "piece sacrifices"),
-    ("watching", "someone blunder a won endgame"),
-    ("playing", "1. d4 (the superior choice)"),
-    ("watching", "preparation go out the window by move 8"),
-    ("competing", "World's Worst Chess Oracle"),
-    ("watching", "GMs stare at each other for 6 hours"),
+    "Watching Nepomniachtchi blunder",
+    "Watching Gukesh forget his prep",
+    "Playing Magnus Carlsen (he declined)",
+    "Listening to Fabiano think for 45 min",
+    "Watching for the next Bongcloud",
+    "Trying to replace Octopus Paul",
+    "Watching Hikaru speedrun the standings",
+    "Playing e4 (objectively best)",
+    "Watching a draw offer get declined",
+    "Listening to piece sacrifices",
+    "Watching someone blunder a won endgame",
+    "Playing 1. d4 (the superior choice)",
+    "Watching prep go out the window on move 8",
+    "Competing: World's Worst Chess Oracle",
+    "Watching GMs stare at each other for 6 hours",
 ]
 
 COGS = [
@@ -101,15 +101,9 @@ class CandidatesBot(commands.Bot):
 
     @tasks.loop(seconds=10)
     async def rotate_status(self) -> None:
-        activity_type, name = random.choice(STATUSES)
-        type_map = {
-            "watching": discord.ActivityType.watching,
-            "listening": discord.ActivityType.listening,
-            "playing": discord.ActivityType.playing,
-            "competing": discord.ActivityType.competing,
-        }
+        status = random.choice(STATUSES)
         await self.change_presence(
-            activity=discord.Activity(type=type_map[activity_type], name=name)
+            activity=discord.CustomActivity(name=status)
         )
 
     async def on_command_error(
