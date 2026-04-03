@@ -7,11 +7,12 @@ Usage:
 
 import asyncio
 import logging
+import random
 import sys
 from pathlib import Path
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import config
 import database
@@ -33,6 +34,24 @@ log = logging.getLogger("bot")
 # ---------------------------------------------------------------------------
 # Bot setup
 # ---------------------------------------------------------------------------
+
+STATUSES = [
+    ("watching", "Nepomniachtchi blunder"),
+    ("watching", "Gukesh forget his prep"),
+    ("playing", "Magnus Carlsen (he declined)"),
+    ("listening", "Fabiano Caruana think for 45 min"),
+    ("watching", "for the next Bongcloud"),
+    ("competing", "to replace Octopus Paul"),
+    ("watching", "Hikaru speedrun the standings"),
+    ("playing", "e4 (objectively best)"),
+    ("watching", "a draw offer get declined"),
+    ("listening", "piece sacrifices"),
+    ("watching", "someone blunder a won endgame"),
+    ("playing", "1. d4 (the superior choice)"),
+    ("watching", "preparation go out the window by move 8"),
+    ("competing", "World's Worst Chess Oracle"),
+    ("watching", "GMs stare at each other for 6 hours"),
+]
 
 COGS = [
     "cogs.predictions",
@@ -78,11 +97,19 @@ class CandidatesBot(commands.Bot):
 
     async def on_ready(self) -> None:
         log.info("Logged in as %s (ID: %s)", self.user, self.user.id)
+        self.rotate_status.start()
+
+    @tasks.loop(seconds=10)
+    async def rotate_status(self) -> None:
+        activity_type, name = random.choice(STATUSES)
+        type_map = {
+            "watching": discord.ActivityType.watching,
+            "listening": discord.ActivityType.listening,
+            "playing": discord.ActivityType.playing,
+            "competing": discord.ActivityType.competing,
+        }
         await self.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching,
-                name="2026 Chess Candidates",
-            )
+            activity=discord.Activity(type=type_map[activity_type], name=name)
         )
 
     async def on_command_error(
