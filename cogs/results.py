@@ -18,6 +18,7 @@ from discord.ext import commands, tasks
 import database
 import config
 import scoring as scoring_module
+import lichess_fetcher
 from tournament_data import (
     RESULT_WHITE_WIN,
     RESULT_DRAW,
@@ -66,9 +67,12 @@ class Results(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.auto_score_task.start()
+        if config.LICHESS_OPEN_BROADCAST_ID or config.LICHESS_WOMEN_BROADCAST_ID:
+            self.lichess_fetch_task.start()
 
     def cog_unload(self) -> None:
         self.auto_score_task.cancel()
+        self.lichess_fetch_task.cancel()
 
     # ------------------------------------------------------------------
     # /enterresult
@@ -310,6 +314,87 @@ class Results(commands.Cog):
     @auto_score_task.before_loop
     async def before_auto_score(self) -> None:
         await self.bot.wait_until_ready()
+
+    # ------------------------------------------------------------------
+    # Background task: auto-fetch results from Lichess every 30 minutes
+    # ------------------------------------------------------------------
+
+    @tasks.loop(minutes=30)
+    async def lichess_fetch_task(self) -> None:
+        for section, broadcast_id in (
+            (SECTION_OPEN, config.LICHESS_OPEN_BROADCAST_ID),
+            (SECTION_WOMEN, config.LICHESS_WOMEN_BROADCAST_ID),
+        ):
+            if not broadcast_id:
+                continue
+            try:
+                await self._fetch_section_results(section, broadcast_id)
+            except Exception as exc:
+                log.error("lichess_fetch_task error [%s]: %s", section, exc, exc_info=True)
+
+    @lichess_fetch_task.before_loop
+    async def before_lichess_fetch(self) -> None:
+        await self.bot.wait_until_ready()
+
+    async def _fetch_section_results(self, section: str, broadcast_id: str) -> None:
+        rounds = lichess_fetcher.get_rounds(broadcast_id)
+        if not rounds:
+            return
+
+        for round_info in rounds:
+            round_id = round_info.get("id")
+            round_name = round_info.get("name", "")
+            # Extract round number from name like "Round 5"
+            m = __import__("re").search(r"\d+", round_name)
+            if not m:
+                continue
+            round_number = int(m.group())
+
+            games_from_lichess = lichess_fetcher.get_round_results(round_id)
+            for lg in games_from_lichess:
+                white_canon, black_canon = lichess_fetcher.match_game_to_db(
+                    lg["white"], lg["black"], section
+                )
+                if not white_canon or not black_canon:
+                    log.warning(
+                        "Could not match Lichess game: %s vs %s", lg["white"], lg["black"]
+                    )
+                    continue
+
+                game = database.get_game_by_players(
+                    section, round_number, white_canon, black_canon
+                )
+                if not game:
+                    continue
+
+                existing = database.get_result(game["game_id"])
+                if existing:
+                    continue  # already have a result
+
+                result = lg["result"]
+                database.save_result(game["game_id"], result, user_id=None)
+                scored = _score_game(game["game_id"], result)
+                log.info(
+                    "Auto-fetched result for game %d (%s vs %s): %s — scored %d predictions",
+                    game["game_id"], white_canon, black_canon, result, len(scored),
+                )
+
+                if config.ANNOUNCEMENTS_CHANNEL_ID:
+                    channel = self.bot.get_channel(config.ANNOUNCEMENTS_CHANNEL_ID)
+                    if channel:
+                        section_label = "Open" if section == SECTION_OPEN else "Women's"
+                        await channel.send(
+                            embed=discord.Embed(
+                                title=f"Result: {section_label} R{round_number}",
+                                description=(
+                                    f"**{white_canon}** vs **{black_canon}**\n"
+                                    f"Result: {RESULT_EMOJI.get(result, result)}"
+                                    f" **{RESULT_LABELS.get(result, result)}**\n"
+                                    f"Scored {len(scored)} prediction(s)."
+                                ),
+                                color=discord.Color.green(),
+                            )
+                        )
 
 
 # ---------------------------------------------------------------------------

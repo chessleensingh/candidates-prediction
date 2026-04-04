@@ -43,3 +43,8 @@ ANNOUNCEMENTS_CHANNEL_ID: int | None = (
 
 # How many seconds between the background task tick (auto-score check)
 BACKGROUND_TASK_INTERVAL: int = int(os.getenv("BACKGROUND_TASK_INTERVAL", "120"))
+
+# Lichess broadcast IDs for auto-fetching results.
+# Found in the Lichess broadcast URL: lichess.org/broadcast/some-slug/{ID}
+LICHESS_OPEN_BROADCAST_ID: str | None = os.getenv("LICHESS_OPEN_BROADCAST_ID") or None
+LICHESS_WOMEN_BROADCAST_ID: str | None = os.getenv("LICHESS_WOMEN_BROADCAST_ID") or None

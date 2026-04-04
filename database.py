@@ -197,6 +197,20 @@ def get_game(game_id: int) -> sqlite3.Row | None:
         ).fetchone()
 
 
+def get_game_by_players(
+    section: str, round_number: int, white_player: str, black_player: str
+) -> sqlite3.Row | None:
+    with _conn() as con:
+        return con.execute(
+            """
+            SELECT * FROM games
+            WHERE section = ? AND round_number = ?
+              AND white_player = ? AND black_player = ?
+            """,
+            (section, round_number, white_player, black_player),
+        ).fetchone()
+
+
 def get_all_games(section: str) -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute(
